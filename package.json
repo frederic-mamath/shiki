@@ -1,0 +1,16 @@
+{
+  "name": "shiki",
+  "version": "1.0.0",
+  "description": "Generate the demo report for the ceremony",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "author": "Frédéric MAMATH",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "ramda": "^0.27.1"
+  }
+}
