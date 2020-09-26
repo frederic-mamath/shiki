@@ -18,7 +18,7 @@ const getBoard = () => {
   );
 }
 
-const getBoardList = () => {
+const getBoardLists = () => {
   return JSON.parse(
     execSync(
       `curl --request GET --url 'https://api.trello.com/1/boards/${SPRINT_BOARD_ID}/lists?key=${process.env.TRELLO_API_KEY}&token=${process.env.TRELLO_APP_TOKEN}' --header 'Accept: application/json'`,
@@ -62,12 +62,22 @@ const getCardsFromListIds = (listIds) => {
   return cards;
 }
 
+const getMemberFromBoardId = (boardId) => {
+  return JSON.parse(
+    execSync(
+      `curl -s --request GET --url 'https://api.trello.com/1/boards/${boardId}/members?key=${process.env.TRELLO_API_KEY}&token=${process.env.TRELLO_APP_TOKEN}' --header 'Accept: application/json'`,
+      { encoding: 'utf8' }
+    )
+  );
+}
+
 module.exports = {
-  getMyBoards,
   getBoard,
-  getBoardList,
-  getLists,
-  getLabelFromBoardId,
+  getBoardLists,
   getCardsFromListId,
   getCardsFromListIds,
+  getLabelFromBoardId,
+  getLists,
+  getMemberFromBoardId,
+  getMyBoards,
 };

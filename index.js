@@ -1,21 +1,20 @@
 const dotenv = require('dotenv');
-const { pathOr, replace, test } = require('ramda');
+const { pathOr, reduce, replace, test } = require('ramda');
 const { 
   getBoard,
-  getBoardList,
+  getBoardLists,
   getCardsFromListId,
   getCardsFromListIds,
   getLabelFromBoardId,
   getLists,
+  getMemberFromBoardId,
   getMyBoards,
 } = require('./services');
 
 dotenv.config();
 
+const REGEX_POINT_ON_CARD = /\((\d)*(\.)*(\d)*\)/;
 const SPRINT_BOARD_ID = '5a8d6e6fdb91525b2915ae51';
-
-const trelloKey = process.env.TRELLO_API_KEY;
-const trelloToken = process.env.TRELLO_APP_TOKEN;
 const sprintBoardId = '5a8d6e6fdb91525b2915ae51';
 
 const listIdsFromCurrentSprint = [
@@ -27,6 +26,27 @@ const listIdsFromCurrentSprint = [
   '5a8d6eb6a051da71387d57f9', // To validate
   '5f6388b827815b40476d34ee', // Sprint 129
 ];
+
+const COLUMNS = {
+  TO_VALIDATE: {
+    id: '5a8d6eb6a051da71387d57f9',
+    name: 'To Validate (add to bottom)',
+    closed: false,
+    pos: 660887.7942471723,
+    softLimit: null,
+    idBoard: '5a8d6e6fdb91525b2915ae51',
+    subscribed: false
+  },
+  DONE: { // To be updated weekly
+    id: '5f6388b827815b40476d34ee',
+    name: 'Done Sprint 129',
+    closed: false,
+    pos: 665361.9901046376,
+    softLimit: null,
+    idBoard: '5a8d6e6fdb91525b2915ae51',
+    subscribed: false
+  },
+}
 
 const LABELS = {
   TRANSVERSE: {
@@ -49,8 +69,21 @@ const LABELS = {
   },
 }
 
-const printSeparator = () => {
-  console.log("==========");
+const members = getMemberFromBoardId(SPRINT_BOARD_ID);
+const membersById = reduce(
+  (acc, val) => {    
+    acc[val.id] = val;
+
+    return acc;
+  },
+  {},
+  members,
+);
+
+const printSeparator = (sectionName) => {
+  console.log("".padEnd(20, "="));
+  console.log(sectionName.padEnd(20, "="));
+  console.log("".padEnd(20, "="));
 };
 
 const Card = {
@@ -77,9 +110,32 @@ const Cards = {
   },
 };
 
-const printCard = (card) => {
-  console.log("- ", card.name);
-  console.log("\t-", card.url);
+const printCard = (card, options = {
+  withUrl: false,
+  withMember: false,
+}) => {
+  if (!card.name.match(REGEX_POINT_ON_CARD)) {
+    return;
+  }
+
+  if (card.idList === COLUMNS.TO_VALIDATE.id) {
+    console.log("\x1b[33m", "- ", card.name, "\x1b[0m");
+  } else if (card.idList === COLUMNS.DONE.id) {
+    console.log("\x1b[34m", "- ", card.name, "\x1b[0m");
+  } else {
+    console.log("- ", card.name);
+  }
+
+  if (options.withUrl) {
+    console.log("\t-", card.url);
+  }
+
+  if (options.withMember) {
+    const membersOnCard = card.idMembers;
+    membersOnCard.forEach(memberId => {
+      console.log("\t\t-", pathOr(memberId, [memberId, 'fullName'], membersById));    
+    });
+  }
 };
 
 const cards = getCardsFromListIds(listIdsFromCurrentSprint);
@@ -96,21 +152,25 @@ const bugPoints = Cards.getTotalPoints(bugs);
 const otherPoints = Cards.getTotalPoints(others);
 
 console.log("# Sprint 129");
-printSeparator();
+printSeparator("Sprint Goal");
 console.log("Number of points: ", sprintGoalPoints);
-sprintGoals.forEach(printCard);
-printSeparator();
+sprintGoals.forEach(card => printCard(card));
+printSeparator("Bugs");
 console.log("Number of points: ", bugPoints);
-bugs.forEach(printCard);
-printSeparator();
+bugs.forEach(card => printCard(card));
+printSeparator("Others");
 console.log("Number of points: ", otherPoints);
-others.forEach(printCard);
-printSeparator();
+others.forEach(card => printCard(card));
+printSeparator("Investigations");
 console.log("Number of points: ", investigationPoints);
-investigations.forEach(printCard);
-printSeparator();
+investigations.forEach(card => printCard(card));
+printSeparator("Transverses");
 console.log("Number of points: ", transversePoints);
-transverses.forEach(printCard);
+transverses.forEach(card => printCard(card));
 
 
 // console.log(getLabelFromBoardId(sprintBoardId));
+
+// console.log(getBoardLists(SPRINT_BOARD_ID))
+// console.log(getCardsFromListId('5f6388b827815b40476d34ee'));
+// console.log(getMemberFromBoardId(SPRINT_BOARD_ID));
